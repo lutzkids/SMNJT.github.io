@@ -1,61 +1,60 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charet="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-cale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TarkovBTC(SMNJT) - 条件式价值转移协议</title>
-    <link rel="preconnect" href="http://font.googleapi.com">
-    <tyle>
+    <style>
         :root {
             --bg-primary: #07080d;
-            --bg-econdary: #0e101c;
+            --bg-secondary: #0e101c;
             --bg-card: rgba(255,255,255,0.03);
             --border: rgba(255,255,255,0.08);
             --text-primary: #f0f2fa;
-            --text-econdary: #8a8fb5;
+            --text-secondary: #8a8fb5;
             --accent: #38bdf8;
             --accent2: #6366f1;
             --accent3: #818cf8;
             --gradient: linear-gradient(135deg, #38bdf8, #6366f1);
         }
-        * { margin:0; padding:0; box-izing:border-box; }
-        html { croll-behavior: mooth; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Inter', 'Noto San SC', an-erif;
+            font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             overflow-x: hidden;
             line-height: 1.7;
         }
         .bg-gradient-blur {
-            poition: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-event: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
         }
         .bg-gradient-blur .orb {
-            poition: abolute; border-radiu: 50%; filter: blur(120px); opacity: 0.3;
-            animation: floatOrb 25 eae-in-out infinite alternate;
+            position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.3;
+            animation: floatOrb 25s ease-in-out infinite alternate;
         }
         .orb:nth-child(1) { width: 500px; height: 500px; background: #38bdf8; top: -15%; left: -10%; }
-        .orb:nth-child(2) { width: 400px; height: 400px; background: #6366f1; top: 35%; right: -10%; animation-delay: -8; }
-        .orb:nth-child(3) { width: 300px; height: 300px; background: #a855f7; bottom: 5%; left: 20%; animation-delay: -16; }
-        @keyframe floatOrb { 0% { tranform: tranlate(0,0) cale(1); } 100% { tranform: tranlate(40px, -40px) cale(1.1); } }
+        .orb:nth-child(2) { width: 400px; height: 400px; background: #6366f1; top: 35%; right: -10%; animation-delay: -8s; }
+        .orb:nth-child(3) { width: 300px; height: 300px; background: #a855f7; bottom: 5%; left: 20%; animation-delay: -16s; }
+        @keyframes floatOrb { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(40px, -40px) scale(1.1); } }
 
         .navbar {
-            poition: fixed; top: 0; left: 0; width: 100%; padding: 16px 40px;
-            diplay: flex; jutify-content: pace-between; align-item: center;
+            position: fixed; top: 0; left: 0; width: 100%; padding: 16px 40px;
+            display: flex; justify-content: space-between; align-items: center;
             backdrop-filter: blur(20px); background: rgba(7,8,13,0.75);
-            border-bottom: 1px olid var(--border); z-index: 100; tranition: all 0.3 eae;
+            border-bottom: 1px solid var(--border); z-index: 100; transition: all 0.3s ease;
         }
-        .navbar.crolled { padding: 12px 40px; background: rgba(7,8,13,0.95); }
+        .navbar.scrolled { padding: 12px 40px; background: rgba(7,8,13,0.95); }
         .nav-logo {
-            diplay: flex; align-item: center; gap: 10px; font-ize: 1.4rem; font-weight: 700;
-            background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: tranparent;
+            display: flex; align-items: center; gap: 10px; font-size: 1.4rem; font-weight: 700;
+            background: var(--gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
             text-decoration: none;
         }
-        .nav-logo vg { width: 28px; height: 28px; }
-        .nav-link { diplay: flex; gap: 28px; lit-tyle: none; }
-        .nav-link a { color: var(--text-econdary); text-decoration: none; font-ize: 0.95rem; font-weight: 500; tranition: color 0.3; poition: relative; }
-        .nav-link a:hover { color: var(--text-primary); }
+        .nav-logo svg { width: 28px; height: 28px; }
+        .nav-links { display: flex; gap: 28px; list-style: none; }
+        .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.3s; position: relative; }
+        .nav-links a:hover { color: var(--text-primary); }
         .nav-btn {
             padding: 10px 22px; border-radius: 12px; background: var(--gradient); border: none;
             color: #fff; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
@@ -101,7 +100,7 @@
             font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 800; line-height: 1.2; margin-bottom: 20px;
             animation: fadeInUp 0.8s ease 0.1s both;
         }
-        .hero .gradient-text { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero .gradient-text { background: var(--gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { font-size: 1.15rem; color: var(--text-secondary); max-width: 680px; margin: 0 auto 32px; animation: fadeInUp 0.8s ease 0.2s both; }
         .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: fadeInUp 0.8s ease 0.3s both; }
         .btn-primary {
@@ -226,7 +225,7 @@
 
         footer { padding: 60px 20px 30px; border-top: 1px solid var(--border); position: relative; z-index: 1; }
         .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
-        .footer-brand .logo { font-size: 1.3rem; font-weight: 700; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; display: block; }
+        .footer-brand .logo { font-size: 1.3rem; font-weight: 700; background: var(--gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; display: block; }
         .footer-brand p { color: var(--text-secondary); font-size: 0.9rem; max-width: 260px; }
         .footer-links h4 { font-size: 0.9rem; margin-bottom: 14px; color: var(--text-primary); }
         .footer-links ul { list-style: none; }
@@ -582,4 +581,3 @@
 </script>
 </body>
 </html>
-
