@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charet="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-cale=1.0">
+    <title>TarkovBTC(SMNJT) - 条件式价值转移协议</title>
+    <link rel="preconnect" href="http://font.googleapi.com">
+    <link href="http://cdn.jdelivr.net/npm/fontource-inter@4.5.0/index.min.c" rel="tyleheet">
+    <tyle>
+        :root {
+            --bg-primary: #07080d;
+            --bg-econdary: #0e101c;
+            --bg-card: rgba(255,255,255,0.03);
+            --border: rgba(255,255,255,0.08);
+            --text-primary: #f0f2fa;
+            --text-econdary: #8a8fb5;
+            --accent: #38bdf8;
+            --accent2: #6366f1;
+            --accent3: #818cf8;
+            --gradient: linear-gradient(135deg, #38bdf8, #6366f1);
+        }
+        * { margin:0; padding:0; box-izing:border-box; }
+        html { croll-behavior: mooth; }
+        body {
+            font-family: 'Inter', 'Noto San SC', an-erif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+        .bg-gradient-blur {
+            poition: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-event: none;
+        }
+        .bg-gradient-blur .orb {
+            poition: abolute; border-radiu: 50%; filter: blur(120px); opacity: 0.3;
+            animation: floatOrb 25 eae-in-out infinite alternate;
+        }
+        .orb:nth-child(1) { width: 500px; height: 500px; background: #38bdf8; top: -15%; left: -10%; }
+        .orb:nth-child(2) { width: 400px; height: 400px; background: #6366f1; top: 35%; right: -10%; animation-delay: -8; }
+        .orb:nth-child(3) { width: 300px; height: 300px; background: #a855f7; bottom: 5%; left: 20%; animation-delay: -16; }
+        @keyframe floatOrb { 0% { tranform: tranlate(0,0) cale(1); } 100% { tranform: tranlate(40px, -40px) cale(1.1); } }
+
+        .navbar {
+            poition: fixed; top: 0; left: 0; width: 100%; padding: 16px 40px;
+            diplay: flex; jutify-content: pace-between; align-item: center;
+            backdrop-filter: blur(20px); background: rgba(7,8,13,0.75);
+            border-bottom: 1px olid var(--border); z-index: 100; tranition: all 0.3 eae;
+        }
+        .navbar.crolled { padding: 12px 40px; background: rgba(7,8,13,0.95); }
+        .nav-logo {
+            diplay: flex; align-item: center; gap: 10px; font-ize: 1.4rem; font-weight: 700;
+            background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: tranparent;
+            text-decoration: none;
+        }
+        .nav-logo vg { width: 28px; height: 28px; }
+        .nav-link { diplay: flex; gap: 28px; lit-tyle: none; }
+        .nav-link a { color: var(--text-econdary); text-decoration: none; font-ize: 0.95rem; font-weight: 500; tranition: color 0.3; poition: relative; }
+        .nav-link a:hover { color: var(--text-primary); }
+        .nav-btn {
+            padding: 10px 22px; border-radius: 12px; background: var(--gradient); border: none;
+            color: #fff; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;
+        }
+        .nav-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(56,189,248,0.35); }
+        .mobile-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; }
+        .mobile-toggle span { display: block; width: 24px; height: 2px; background: var(--text-primary); transition: all 0.3s; }
+
+        .mobile-menu {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(7,8,13,0.98); z-index: 99; flex-direction: column; align-items: center;
+            justify-content: center; gap: 28px; backdrop-filter: blur(20px);
+        }
+        .mobile-menu.active { display: flex; }
+        .mobile-menu a { color: var(--text-primary); text-decoration: none; font-size: 1.2rem; font-weight: 600; transition: color 0.3s; }
+        .mobile-close { position: absolute; top: 20px; right: 24px; background: none; border: none; color: var(--text-primary); font-size: 2rem; cursor: pointer; }
+
+        section { padding: 100px 20px; position: relative; z-index: 1; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 60px; }
+        .section-label {
+            display: inline-block; padding: 6px 16px; border-radius: 100px;
+            background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.2);
+            font-size: 0.8rem; font-weight: 600; color: var(--accent);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+        }
+        .section-header h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; margin-bottom: 16px; }
+        .section-header p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+        .hero {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 140px 20px 80px;
+        }
+        .hero-content { max-width: 880px; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 100px;
+            background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3);
+            font-size: 0.85rem; color: var(--accent); margin-bottom: 24px; animation: fadeInUp 0.8s ease;
+        }
+        .hero-badge .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .hero h1 {
+            font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 800; line-height: 1.2; margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease 0.1s both;
+        }
+        .hero .gradient-text { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 1.15rem; color: var(--text-secondary); max-width: 680px; margin: 0 auto 32px; animation: fadeInUp 0.8s ease 0.2s both; }
+        .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: fadeInUp 0.8s ease 0.3s both; }
+        .btn-primary {
+            padding: 14px 32px; border-radius: 14px; background: var(--gradient); border: none;
+            color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(56,189,248,0.45); }
+        .btn-secondary {
+            padding: 14px 32px; border-radius: 14px; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); color: var(--text-primary); font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); transform: translateY(-3px); }
+
+        .contract-box {
+            margin-top: 32px; animation: fadeInUp 0.8s ease 0.4s both;
+            display: inline-flex; align-items: center; gap: 12px; padding: 10px 20px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .contract-box:hover { border-color: rgba(56,189,248,0.4); background: rgba(56,189,248,0.05); }
+        .contract-label { font-size: 0.8rem; color: var(--text-secondary); }
+        .contract-addr { font-family: monospace; color: var(--accent); font-weight: 500; }
+        .copy-icon { width: 18px; height: 18px; color: var(--text-secondary); transition: color 0.2s; }
+        .contract-box:hover .copy-icon { color: var(--accent); }
+
+        .features-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;
+        }
+        .feature-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+            padding: 32px; transition: all 0.4s ease; position: relative; overflow: hidden;
+        }
+        .feature-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: var(--gradient); opacity: 0; transition: opacity 0.3s;
+        }
+        .feature-card:hover { border-color: rgba(56,189,248,0.3); transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-icon {
+            width: 54px; height: 54px; border-radius: 14px; background: rgba(56,189,248,0.12);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+        }
+        .feature-icon svg { width: 26px; height: 26px; color: var(--accent); }
+        .feature-card h3 { font-size: 1.2rem; margin-bottom: 10px; font-weight: 600; }
+        .feature-card p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; }
+
+        .architecture-flow {
+            display: flex; align-items: center; justify-content: center; gap: 16px;
+            flex-wrap: wrap; margin-bottom: 50px;
+        }
+        .flow-step {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 20px; text-align: center; width: 160px; transition: all 0.3s;
+        }
+        .flow-step:hover { border-color: rgba(56,189,248,0.3); transform: translateY(-4px); background: rgba(56,189,248,0.05); }
+        .flow-step .step-icon {
+            width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 12px;
+            background: rgba(56,189,248,0.15); display: flex; align-items: center; justify-content: center;
+        }
+        .flow-step h4 { font-size: 1rem; margin-bottom: 6px; }
+        .flow-step p { font-size: 0.8rem; color: var(--text-secondary); }
+        .flow-arrow { font-size: 2rem; color: var(--text-secondary); opacity: 0.5; }
+        .flow-branch { display: flex; gap: 12px; flex-direction: column; align-items: center; }
+        .branch-container { display: flex; gap: 20px; align-items: center; }
+
+        .tokenomics-grid {
+            display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: center;
+        }
+        .utility-table { width: 100%; border-collapse: collapse; }
+        .utility-table th {
+            background: rgba(56,189,248,0.08); padding: 14px 20px; text-align: left;
+            font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .utility-table td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .utility-table tr:last-child td { border-bottom: none; }
+        .utility-icon { width: 24px; height: 24px; margin-right: 10px; vertical-align: middle; color: var(--accent); }
+
+        .chart-container { display: flex; justify-content: center; align-items: center; }
+        .donut-chart { position: relative; width: 280px; height: 280px; }
+        .donut-chart svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .donut-center {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; background: var(--bg-primary); width: 140px; height: 140px;
+            border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .donut-center .total { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); }
+        .donut-center .label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; }
+
+        .roadmap-timeline { position: relative; max-width: 850px; margin: 0 auto; }
+        .roadmap-timeline::before {
+            content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px;
+            background: var(--border); transform: translateX(-50%);
+        }
+        .timeline-item { display: flex; align-items: flex-start; margin-bottom: 48px; position: relative; }
+        .timeline-item:nth-child(even) { flex-direction: row-reverse; }
+        .timeline-content {
+            width: calc(50% - 40px); background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 18px; padding: 24px; transition: all 0.4s;
+        }
+        .timeline-item.completed .timeline-content { border-color: rgba(34,197,94,0.3); }
+        .timeline-dot {
+            position: absolute; left: 50%; top: 24px; transform: translateX(-50%);
+            width: 16px; height: 16px; border-radius: 50%; background: var(--bg-primary);
+            border: 3px solid var(--border); z-index: 2;
+        }
+        .timeline-item.completed .timeline-dot { border-color: #22c55e; background: #22c55e; }
+        .timeline-date { font-size: 0.75rem; font-weight: 600; color: var(--accent); margin-bottom: 6px; letter-spacing: 1px; }
+        .timeline-content h3 { font-size: 1.1rem; margin-bottom: 8px; }
+        .timeline-content ul { list-style: none; padding: 0; }
+        .timeline-content li { font-size: 0.88rem; color: var(--text-secondary); padding: 3px 0 3px 18px; position: relative; }
+        .timeline-content li::before { content: '•'; position: absolute; left: 0; color: var(--accent); }
+
+        .disclaimer {
+            max-width: 1000px; margin: 0 auto; padding: 32px;
+            background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 20px; text-align: center;
+        }
+        .disclaimer h3 { color: #fca5a5; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .disclaimer p { color: #d1d5db; font-size: 0.95rem; line-height: 1.7; }
+
+        footer { padding: 60px 20px 30px; border-top: 1px solid var(--border); position: relative; z-index: 1; }
+        .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+        .footer-brand .logo { font-size: 1.3rem; font-weight: 700; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; display: block; }
+        .footer-brand p { color: var(--text-secondary); font-size: 0.9rem; max-width: 260px; }
+        .footer-links h4 { font-size: 0.9rem; margin-bottom: 14px; color: var(--text-primary); }
+        .footer-links ul { list-style: none; }
+        .footer-links li { margin-bottom: 8px; }
+        .footer-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; transition: color 0.3s; }
+        .footer-links a:hover { color: var(--accent); }
+        .footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        .footer-bottom p { font-size: 0.85rem; color: var(--text-secondary); }
+        .footer-social { display: flex; gap: 10px; margin-top: 16px; }
+        .footer-social a { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); text-decoration: none; transition: all 0.3s; }
+        .footer-social a:hover { background: rgba(56,189,248,0.15); color: var(--accent); border-color: rgba(56,189,248,0.3); }
+        .footer-bottom-links { display: flex; gap: 20px; }
+        .footer-bottom-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; transition: color 0.3s; }
+        .footer-bottom-links a:hover { color: var(--accent); }
+
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16,1,0.3,1); }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 1024px) { .tokenomics-grid { grid-template-columns: 1fr; } .footer-content { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) {
+            .nav-links, .nav-btn { display: none; }
+            .mobile-toggle { display: flex; }
+            .navbar { padding: 14px 20px; }
+            .hero { padding: 120px 16px 60px; min-height: auto; }
+            section { padding: 70px 16px; }
+            .architecture-flow { flex-direction: column; align-items: center; }
+            .branch-container { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+            .roadmap-timeline::before { left: 20px; }
+            .timeline-item, .timeline-item:nth-child(even) { flex-direction: column !important; }
+            .timeline-content { width: calc(100% - 50px); margin-left: 50px !important; }
+            .timeline-dot { left: 20px !important; }
+            .footer-content { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; text-align: center; }
+            .contract-box { width: 100%; justify-content: center; overflow: hidden; }
+            .contract-addr { font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-gradient-blur">
+    <div class="orb"></div><div class="orb"></div><div class="orb"></div>
+</div>
+
+<nav class="navbar" id="navbar">
+    <a href="#" class="nav-logo">
+        <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#logoGrad)"/><path d="M8 16L14 10L20 16L26 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 22L14 16L20 22L26 16" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/><defs><linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#38bdf8"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs></svg>
+        TarkovBTC
+    </a>
+    <ul class="nav-links">
+        <li><a href="#features">核心功能</a></li>
+        <li><a href="#architecture">技术架构</a></li>
+        <li><a href="#tokenomics">$SMNJT 代币</a></li>
+        <li><a href="#roadmap">路线图</a></li>
+    </ul>
+    <a href="https://github.com/lutzkids/-.git" class="nav-btn" target="_blank">阅读白皮书</a>
+    <button class="mobile-toggle" id="mobileToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-close" id="mobileClose">✕</button>
+    <a href="#features" onclick="closeMobile()">核心功能</a>
+    <a href="#architecture" onclick="closeMobile()">技术架构</a>
+    <a href="#tokenomics" onclick="closeMobile()">$SMNJT 代币</a>
+    <a href="#roadmap" onclick="closeMobile()">路线图</a>
+    <a href="https://github.com/lutzkids/-.git" class="btn-primary" target="_blank">阅读白皮书</a>
+</div>
+
+<section class="hero" id="hero">
+    <div class="hero-content">
+        <div class="hero-badge"><span class="dot"></span> 主网已上线 · 合约已审计</div>
+        <h1>下一代<span class="gradient-text">条件式价值</span>转移协议</h1>
+        <p>TarkovBTC(SMNJT) 通过智能合约与预言机技术，实现去中心化、可验证、隐私保护的价值流转，消除高价值数字交易中的信任摩擦。</p>
+        <div class="hero-buttons">
+            <a href="https://tieba.baidu.com/p/10751225189?fr=personpage" class="btn-primary" target="_blank">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> 进入社区
+            </a>
+            <a href="https://github.com/lutzkids/-.git" class="btn-secondary" target="_blank">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg> 查看源码
+            </a>
+        </div>
+        <div class="contract-box" id="copyBox">
+            <span class="contract-label">合约地址:</span>
+            <span class="contract-addr">0x9f8dce4C2987Ab017Bcb124C744A0cdd406cEd1A</span>
+            <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        </div>
+    </div>
+</section>
+
+<section id="features">
+    <div class="container">
+        <div class="section-header reveal">
+            <span class="section-label">核心优势</span>
+            <h2>重新定义价值流转</h2>
+            <p>以代码为信任，以密码学为基石，构建下一代数字资产交换标准</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 0l3 3m-3-3l-3 3m6 6v6m0 0l-3 3m3-3l3 3m-6-3H6m0 0v-6"/></svg></div>
+                <h3>条件触发执行</h3>
+                <p>预设时间锁、事件或预言机验证条件。条件达成自动结算，未达成原路退回，消除传统交易对手风险。</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01M2 12h20"/></svg></div>
+                <h3>链上透明可验</h3>
+                <p>所有转移记录、条件状态与结算结果实时上链。支持第三方审计工具一键验证，构建无可辩驳的信任链。</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg></div>
+                <h3>零知识隐私保护</h3>
+                <p>集成 zk-SNARKs 模块。在满足合规审计要求的前提下，可选择性隐藏交易金额与参与方敏感信息。</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
+                <h3>多链无缝扩展</h3>
+                <p>基于标准 ERC-20 / BEP-20 接口设计。原生支持 Ethereum、Base、BSC 等 EVM 兼容链，跨链资产转移零摩擦。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="architecture">
+    <div class="container">
+        <div class="section-header reveal">
+            <span class="section-label">技术架构</span>
+            <h2>协议工作流程</h2>
+            <p>模块化智能合约设计，确保每一笔价值转移安全、可控、可追溯</p>
+        </div>
+
+        <div class="architecture-flow reveal">
+            <div class="flow-step">
+                <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+                <h4>发起条件转移</h4>
+                <p>设定规则与资产</p>
+            </div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">
+                <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+                <h4>合约锁定资产</h4>
+                <p>资金进入托管</p>
+            </div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">
+                <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+                <h4>条件验证中</h4>
+                <p>预言机/时间戳监控</p>
+            </div>
+            <span class="flow-arrow">→</span>
+            <div class="branch-container">
+                <div class="flow-step" style="border-color: rgba(34,197,94,0.4);">
+                    <div class="step-icon" style="background:rgba(34,197,94,0.15); color:#22c55e;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <h4>自动结算</h4>
+                    <p style="color:#22c55e">交付接收方</p>
+                </div>
+                <div class="flow-step" style="border-color: rgba(248,113,113,0.4);">
+                    <div class="step-icon" style="background:rgba(248,113,113,0.15); color:#f87171;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></div>
+                    <h4>条件未达成</h4>
+                    <p style="color:#f87171">退回发起方</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="reveal" style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:28px; overflow-x:auto;">
+            <code style="color:var(--accent); font-size:0.95rem; display:block;">📁 contracts/</code>
+            <ul style="list-style:none; margin-top:12px; font-size:0.9rem; color:var(--text-secondary); line-height:1.8; font-family:monospace;">
+                <li style="padding-left:16px;">├── <span style="color:var(--text-primary)">ConditionalTransfer.sol</span> <span style="opacity:0.6"># 条件转移主逻辑</span></li>
+                <li style="padding-left:16px;">├── <span style="color:var(--text-primary)">TimelockController.sol</span> <span style="opacity:0.6"># 时间锁 + 多签管理</span></li>
+                <li style="padding-left:16px;">├── <span style="color:var(--text-primary)">OracleAdapter.sol</span> <span style="opacity:0.6"># Chainlink/Pyth 预言机适配</span></li>
+                <li style="padding-left:16px;">├── <span style="color:var(--text-primary)">Governance.sol</span> <span style="opacity:0.6"># 社区治理与提案投票</span></li>
+                <li style="padding-left:16px;">└── <span style="color:var(--text-primary)">Token.sol</span> <span style="opacity:0.6"># $SMNJT ERC-20 标准合约</span></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section id="tokenomics" class="tokenomics">
+    <div class="container">
+        <div class="section-header reveal">
+            <span class="section-label">代币经济</span>
+            <h2>$SMNJT 实用型代币</h2>
+            <p>协议治理、手续费抵扣、生态激励与准入凭证的核心载体</p>
+        </div>
+
+        <div class="tokenomics-grid reveal">
+            <div>
+                <table class="utility-table">
+                    <thead><tr><th>功能</th><th>说明</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color:var(--text-primary)"><span style="margin-right:8px">🔐</span> 治理权</td><td style="color:var(--text-secondary)">持有者可发起提案、投票调整协议参数（费率、解锁条件等）</td></tr>
+                        <tr><td style="color:var(--text-primary)"><span style="margin-right:8px">💰</span> 费用抵扣</td><td style="color:var(--text-secondary)">使用 $SMNJT 支付协议手续费，享受最高 50% 折扣</td></tr>
+                        <tr><td style="color:var(--text-primary)"><span style="margin-right:8px">🌱</span> 生态激励</td><td style="color:var(--text-secondary)">质押 $SMNJT 获取流动性挖矿奖励及贡献者分红</td></tr>
+                        <tr><td style="color:var(--text-primary)"><span style="margin-right:8px">🤝</span> 合作准入</td><td style="color:var(--text-secondary)">生态集成方需锁定一定量 $SMNJT 获取 API 权限与优先支持</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="chart-container">
+                <div class="donut-chart">
+                    <svg viewBox="0 0 150 150">
+                        <circle cx="75" cy="75" r="60" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="20"/>
+                        <!-- 25% Rewards -->
+                        <circle cx="75" cy="75" r="60" fill="none" stroke="#38bdf8" stroke-width="20" stroke-dasharray="94.25 282.74" stroke-dashoffset="0" />
+                        <!-- 20% Liquidity -->
+                        <circle cx="75" cy="75" r="60" fill="none" stroke="#6366f1" stroke-width="20" stroke-dasharray="75.40 282.74" stroke-dashoffset="-94.25" />
+                        <!-- 20% Treasury -->
+                        <circle cx="75" cy="75" r="60" fill="none" stroke="#a855f7" stroke-width="20" stroke-dasharray="75.40 282.74" stroke-dashoffset="-169.65" />
+                        <!-- 15% Team -->
+                        <circle cx="75" cy="75" r="60" fill="none" stroke="#22c55e" stroke-width="20" stroke-dasharray="56.55 282.74" stroke-dashoffset="-245.05" />
+                        <!-- 20% Dev/Grants -->
+                        <circle cx="75" cy="75" r="60" fill="none" stroke="#f59e0b" stroke-width="20" stroke-dasharray="75.40 282.74" stroke-dashoffset="-301.60" />
+                    </svg>
+                    <div class="donut-center">
+                        <div class="total">1,000,000,000</div>
+                        <div class="label">Total Supply</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="roadmap">
+    <div class="container">
+        <div class="section-header reveal">
+            <span class="section-label">发展路线图</span>
+            <h2>里程碑与未来规划</h2>
+            <p>从概念验证到全球多链部署，构建可信赖的价值网络</p>
+        </div>
+        <div class="roadmap-timeline">
+            <div class="timeline-item completed reveal">
+                <div class="timeline-content"><div class="timeline-date">2025 Q4</div><h3>协议研发与审计</h3><ul><li>完成核心合约开发 (Solidity ^0.8.20)</li><li>通过 CertiK 与 SlowMist 双重安全审计</li><li>发布测试网 v1.0 与开发者文档</li></ul></div>
+                <div class="timeline-dot"></div>
+            </div>
+            <div class="timeline-item completed reveal">
+                <div class="timeline-content"><div class="timeline-date">2026 5月</div><h3>主网上线与 TGE</h3><ul><li>正式部署至 Ethereum / Base</li><li>$SMNJT 代币生成事件 (TGE)</li><li>DEX 初始流动性池部署</li><li>CoinGecko / CMC 收录上线</li></ul></div>
+                <div class="timeline-dot"></div>
+            </div>
+            <div class="timeline-item reveal">
+                <div class="timeline-content"><div class="timeline-date">2026 Q3</div><h3>预言机集成与隐私模块</h3><ul><li>Chainlink 预言机全面接入</li><li>ZK 隐私交易测试网发布</li><li>上线质押与治理模块</li></ul></div>
+                <div class="timeline-dot"></div>
+            </div>
+            <div class="timeline-item reveal">
+                <div class="timeline-content"><div class="timeline-date">2026 Q4 - 2027</div><h3>跨链扩展与生态繁荣</h3><ul><li>支持 BSC、Arbitrum 等多链部署</li><li>推出企业级 API 与白标解决方案</li><li>生态合作伙伴突破 100+ 家</li><li>启动全球节点与 DAO 自治治理</li></ul></div>
+                <div class="timeline-dot"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="disclaimer">
+    <div class="container reveal">
+        <div class="disclaimer">
+            <h3>⚠️ 免责声明</h3>
+            <p>本文档仅描述技术协议架构与功能，不构成任何投资建议。$SMNJT 为实用型代币（Utility Token），非证券、非股权证明。使用者需自行评估风险，并严格遵守所在地法律法规。区块链项目存在技术迭代、市场波动及监管不确定性，参与即代表您已阅读并同意相关风险条款。</p>
+        </div>
+    </div>
+</section>
+
+<section id="cta">
+    <div class="container reveal">
+        <div style="max-width:850px; margin:0 auto; text-align:center; background:linear-gradient(135deg, rgba(56,189,248,0.12), rgba(99,102,241,0.1)); border:1px solid rgba(56,189,248,0.25); border-radius:24px; padding:50px 30px; position:relative; overflow:hidden;">
+            <h2 style="font-size:2rem; margin-bottom:12px; position:relative; z-index:1;">加入 TarkovBTC生态</h2>
+            <p style="color:var(--text-secondary); margin-bottom:28px; position:relative; z-index:1;">无论您是开发者、机构合作伙伴还是社区贡献者，SMNJT 为您提供开放、透明的协议层基础设施。由于是个人开发者，底部功能暂时无法使用，敬请谅解。</p>
+            <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1;">
+                <a href="https://tieba.baidu.com/p/10751225189?fr=personpage" class="btn-primary" target="_blank">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg> 加入 社区
+                </a>
+                <a href="https://tieba.baidu.com/home/main?id=tb.1.6ef6f8b3.xdBFdIui7TIRCnoqg_PUIw%3Ft%3D1779954473&fr=pb" class="btn-secondary" target="_blank">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg> 关注吧主可留言
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-brand">
+            <span class="logo">TarkovBTC</span>
+            <p>基于智能合约的条件式价值转移协议，以代码重建数字信任，让高价值资产流转更安全、透明、高效。</p>
+            <div class="footer-social">
+                <a href="https://twitter.com/SMNJT_protocol" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+                <a href="https://t.me/SMNJT_official" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></a>
+                <a href="https://社区.gg/SMNJT" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg></a>
+                <a href="https://github.com/SMNJT-finance" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></a>
+            </div>
+        </div>
+        <div class="footer-links">
+            <h4>协议</h4>
+            <ul><li><a href="https://app.SMNJT.finance" target="_blank">启动 DApp</a></li><li><a href="#">条件转移</a></li><li><a href="#">质押中心</a></li><li><a href="#">区块浏览器</a></li></ul>
+        </div>
+        <div class="footer-links">
+            <h4>资源</h4>
+            <ul><li><a href="https://docs.SMNJT.finance" target="_blank">技术白皮书</a></li><li><a href="#">审计报告</a></li><li><a href="#">开发者 API</a></li><li><a href="#">品牌素材</a></li></ul>
+        </div>
+        <div class="footer-links">
+            <h4>治理</h4>
+            <ul><li><a href="#">Snapshot 投票</a></li><li><a href="#">提案提交</a></li><li><a href="#">国库看板</a></li><li><a href="#">Bug 赏金计划</a></li></ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2026 TarkovBTC. 保留所有权利。</p>
+        <div class="footer-bottom-links">
+            <a href="#">隐私政策</a><a href="#">服务条款</a><a href="#">Cookie 设置</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    const mobileToggle = document.getElementById('mobileToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileClose = document.getElementById('mobileClose');
+    mobileToggle.addEventListener('click', () => mobileMenu.classList.add('active'));
+    mobileClose.addEventListener('click', () => mobileMenu.classList.remove('active'));
+    function closeMobile() { mobileMenu.classList.remove('active'); }
+
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const target = document.querySelector(link.getAttribute('href'));
+            if(target) window.scrollTo({top: target.offsetTop - 80, behavior:'smooth'});
+        });
+    });
+
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach((entry, i) => {
+            if(entry.isIntersecting) {
+                setTimeout(() => entry.target.classList.add('visible'), i * 100);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    revealEls.forEach(el => observer.observe(el));
+
+    const copyBox = document.getElementById('copyBox');
+    copyBox.addEventListener('click', () => {
+        const text = '0x9f8dce4C2987Ab017Bcb124C744A0cdd406cEd1A';
+        navigator.clipboard.writeText(text).then(() => {
+            const label = copyBox.querySelector('.contract-label');
+            const orig = label.textContent;
+            label.textContent = '已复制到剪贴板 ✓';
+            label.style.color = '#22c55e';
+            setTimeout(() => { label.textContent = orig; label.style.color = ''; }, 2000);
+        });
+    });
+</script>
+</body>
+</html>
+
